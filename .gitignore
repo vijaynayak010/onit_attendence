@@ -1,0 +1,20 @@
+# Node modules
+backend/node_modules/
+onit-india_frontend/node_modules/
+
+# Environment variables
+backend/.env
+onit-india_frontend/.env
+onit-india_frontend/.env.local
+
+# Build outputs
+onit-india_frontend/dist/
+onit-india_frontend/build/
+
+# Logs
+backend/logs/
+*.log
+
+# OS leftovers
+.DS_Store
+Thumbs.db
