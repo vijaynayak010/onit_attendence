@@ -16,6 +16,13 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
   }
 
   if (!user) return <Navigate to="/login" replace />;
+  
+  // Force employee to change password on first login
+  const isChangePasswordPage = window.location.pathname === '/change-password';
+  if (user.role === 'employee' && !user.isPasswordChanged && !isChangePasswordPage) {
+    return <Navigate to="/change-password" replace />;
+  }
+
   if (adminOnly && user.role !== 'admin') return <Navigate to="/dashboard" replace />;
 
   return children;

@@ -43,7 +43,7 @@ export default function Login() {
       const token = res.data.data.token;
       const userData = {
         id: res.data.data._id || null,
-        name: email.split('@')[0], // Use form email since backend may not return it
+        name: res.data.data.name || email.split('@')[0],
         email: res.data.data.email || email,
         role: res.data.data.role,
         isPasswordChanged: res.data.data.isPasswordChanged,
@@ -52,7 +52,12 @@ export default function Login() {
       login(userData, token);
       
       addToast(`Welcome back! Logged in as ${role === 'admin' ? 'Administrator' : 'Employee'}.`, 'success');
-      navigate('/dashboard');
+      
+      if (userData.role === 'employee' && userData.isPasswordChanged === false) {
+        navigate('/change-password');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       addToast(err.response?.data?.message || 'Invalid credentials. Please try again.', 'error');
     } finally {
@@ -85,7 +90,12 @@ export default function Login() {
             <div className="flex bg-white/5 rounded-xl p-1 border border-white/10">
               <button
                 type="button"
-                onClick={() => setRole('employee')}
+                onClick={() => {
+                  setRole('employee');
+                  setEmail('');
+                  setPassword('');
+                  setErrors({});
+                }}
                 className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                   role === 'employee' ? 'bg-green-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
                 }`}
@@ -94,7 +104,12 @@ export default function Login() {
               </button>
               <button
                 type="button"
-                onClick={() => setRole('admin')}
+                onClick={() => {
+                  setRole('admin');
+                  setEmail('');
+                  setPassword('');
+                  setErrors({});
+                }}
                 className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                   role === 'admin' ? 'bg-green-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
                 }`}
@@ -114,6 +129,7 @@ export default function Login() {
                 <input
                   type="email"
                   value={email}
+                  autoComplete="off"
                   onChange={(e) => { setEmail(e.target.value); setErrors(v => ({ ...v, email: '' })); }}
                   placeholder="you@company.com"
                   className={`w-full rounded-xl border bg-white/5 pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500
@@ -135,6 +151,7 @@ export default function Login() {
                 <input
                   type="password"
                   value={password}
+                  autoComplete="new-password"
                   onChange={(e) => { setPassword(e.target.value); setErrors(v => ({ ...v, password: '' })); }}
                   placeholder="••••••••"
                   className={`w-full rounded-xl border bg-white/5 pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500

@@ -24,6 +24,7 @@ export const adminLogin = async (req, res) => {
         data: {
           token: generateToken(user._id, user.role),
           _id: user._id,
+          name: user.name,
           email: user.email,
           role: user.role,
         },
@@ -52,6 +53,9 @@ export const employeeLogin = async (req, res) => {
            message: 'Must change password before proceeding',
            data: {
              token: generateToken(user._id, user.role),
+             _id: user._id,
+             name: user.name,
+             email: user.email,
              role: user.role,
              isPasswordChanged: false
            }
@@ -63,6 +67,9 @@ export const employeeLogin = async (req, res) => {
         message: 'Employee logged in successfully',
         data: {
           token: generateToken(user._id, user.role),
+          _id: user._id,
+          name: user.name,
+          email: user.email,
           role: user.role,
           isPasswordChanged: user.isPasswordChanged
         },
@@ -94,8 +101,10 @@ export const changePassword = async (req, res) => {
 
       res.json({
         success: true,
-        message: 'Password changed successfully',
-        data: {}
+        message: 'Password initialized successfully. You can now use the dashboard.',
+        data: {
+          isPasswordChanged: true
+        }
       });
     } else {
        res.status(404).json({ success: false, message: 'User not found' });

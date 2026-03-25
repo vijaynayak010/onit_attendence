@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Clock, CheckCircle, XCircle, LogOut, Loader2, FileText, ChevronDown, Users, Edit, Trash2, Key, Search, UserPlus } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Loader2, FileText, ChevronDown, Users, Key, Search, Trash2, Calendar, LayoutDashboard, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { workService, adminService, adminAttendanceService } from '../services/api';
+import { workService, adminService, adminAttendanceService, attendanceService } from '../services/api';
 import Card from '../components/Card';
 import Button from '../components/Button';
 
@@ -13,11 +13,10 @@ function getGreeting() {
   return 'Good Evening';
 }
 
-function WorkUpdateCard() {
+function WorkUpdateForm({ onUpdate }) {
   const [form, setForm] = useState({ title: '', description: '', status: 'in-progress' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const { addToast } = useToast();
 
   const validate = () => {
@@ -34,9 +33,8 @@ function WorkUpdateCard() {
     try {
       await workService.addWork(form);
       addToast('Work update submitted successfully!', 'success');
-      setSuccess(true);
       setForm({ title: '', description: '', status: 'in-progress' });
-      setTimeout(() => setSuccess(false), 3000);
+      if (onUpdate) onUpdate();
     } catch (err) {
       addToast(err.response?.data?.message || 'Failed to submit work update.', 'error');
     } finally {
@@ -45,64 +43,52 @@ function WorkUpdateCard() {
   };
 
   return (
-    <Card hover className="h-full">
+    <Card className="h-full">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h3 className="text-gray-900 font-semibold text-base">Work Update</h3>
-          <p className="text-gray-400 text-sm mt-0.5">Log your daily tasks & progress</p>
+          <h3 className="text-gray-900 font-semibold text-base">New Work Update</h3>
+          <p className="text-gray-400 text-sm mt-0.5">Log your current task</p>
         </div>
         <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-          <FileText size={20} className="text-blue-600" />
+          <Plus size={20} className="text-blue-600" />
         </div>
       </div>
 
       <div className="space-y-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700">Task Title <span className="text-red-500">*</span></label>
+          <label className="text-sm font-medium text-gray-700">Task Title</label>
           <input
             value={form.title}
-            onChange={(e) => { setForm(v => ({ ...v, title: e.target.value })); setErrors(v => ({ ...v, title: '' })); }}
-            placeholder="e.g., Completed API integration"
-            className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-2 focus:ring-green-500 focus:border-green-500
-              ${errors.title ? 'border-red-400' : 'border-gray-200 hover:border-gray-300'}`}
+            onChange={(e) => setForm(v => ({ ...v, title: e.target.value }))}
+            placeholder="What are you working on?"
+            className="w-full rounded-xl border border-gray-200 hover:border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
           />
-          {errors.title && <p className="text-xs text-red-500">{errors.title}</p>}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700">Description <span className="text-red-500">*</span></label>
+          <label className="text-sm font-medium text-gray-700">Description</label>
           <textarea
             value={form.description}
-            onChange={(e) => { setForm(v => ({ ...v, description: e.target.value })); setErrors(v => ({ ...v, description: '' })); }}
-            placeholder="Describe what you worked on today..."
-            rows={4}
-            className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500
-              ${errors.description ? 'border-red-400' : 'border-gray-200 hover:border-gray-300'}`}
+            onChange={(e) => setForm(v => ({ ...v, description: e.target.value }))}
+            placeholder="Details of the work..."
+            rows={3}
+            className="w-full rounded-xl border border-gray-200 hover:border-gray-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
           />
-          {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700">Status</label>
-          <div className="relative">
-            <select
-              value={form.status}
-              onChange={(e) => setForm(v => ({ ...v, status: e.target.value }))}
-              className="w-full rounded-xl border border-gray-200 hover:border-gray-300 px-4 py-2.5 text-sm outline-none transition-all focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none bg-white"
-            >
-              <option value="in-progress">🔄 In Progress</option>
-              <option value="completed">✅ Completed</option>
-              <option value="blocked">🚫 Blocked</option>
-            </select>
-            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
+          <select
+            value={form.status}
+            onChange={(e) => setForm(v => ({ ...v, status: e.target.value }))}
+            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="in-progress">🔄 In Progress</option>
+            <option value="completed">✅ Completed</option>
+          </select>
         </div>
 
-        <div className="pt-2">
-          <Button onClick={handleSubmit} loading={loading} className="w-full" icon={success ? CheckCircle : FileText}>
-            {success ? 'Submitted Successfully!' : 'Submit Work Update'}
-          </Button>
-        </div>
+        <Button onClick={handleSubmit} loading={loading} className="w-full">Submit Update</Button>
       </div>
     </Card>
   );
@@ -124,16 +110,158 @@ function StatCard({ label, value, icon: Icon, color }) {
   );
 }
 
-// --- NEW COMPONENT FOR ADMINS ---
+function EmployeeDashboardView() {
+  const [updates, setUpdates] = useState([]);
+  const [attendance, setAttendance] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { addToast } = useToast();
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [updRes, attRes] = await Promise.all([
+        workService.getMyWorkUpdates(),
+        attendanceService.getMyAttendance()
+      ]);
+      setUpdates(updRes.data.data || []);
+      // Get today's attendance record
+      const today = new Date().toISOString().split('T')[0];
+      const todayRecord = attRes.data.data.find(r => r.date === today);
+      setAttendance(todayRecord);
+    } catch (err) {
+      addToast('Failed to load activity data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="animate-spin text-green-500" size={30} /></div>;
+
+  const stats = {
+    total: updates.length,
+    completed: updates.filter(u => u.status === 'completed').length,
+    inProgress: updates.filter(u => u.status === 'in-progress').length,
+    blocked: updates.filter(u => u.status === 'blocked').length,
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Work Statistics Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Updates" value={stats.total} icon={FileText} color="bg-slate-700" />
+        <StatCard label="Completed" value={stats.completed} icon={CheckCircle} color="bg-green-600" />
+        <StatCard label="In Progress" value={stats.inProgress} icon={Clock} color="bg-blue-600" />
+        <StatCard label="Blocked" value={stats.blocked} icon={XCircle} color="bg-red-500" />
+      </div>
+
+      {/* Attendance Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Today's Attendance</h2>
+          <Button variant="secondary" size="sm" onClick={() => window.location.href='/attendance'}>
+            Check-in/Out
+          </Button>
+        </div>
+        
+        <Card padding="lg">
+          {attendance ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Check-in</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+                    <Clock size={16} className="text-green-600" />
+                  </div>
+                  <p className="text-lg font-bold text-gray-900">
+                    {new Date(attendance.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Check-out</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <Clock size={16} className="text-blue-600" />
+                  </div>
+                  <p className="text-lg font-bold text-gray-900">
+                    {attendance.checkOut ? new Date(attendance.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Duration</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                    <Loader2 size={16} className="text-purple-600" />
+                  </div>
+                  <p className="text-lg font-bold text-gray-900">
+                    {attendance.totalHours ? `${Math.floor(attendance.totalHours / 60)}h ${attendance.totalHours % 60}m` : 'Calculating...'}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Status</p>
+                <div className="flex items-center">
+                  <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm
+                    ${attendance.status === 'present' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                    {attendance.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                <Calendar size={32} className="text-gray-300" />
+              </div>
+              <h4 className="text-lg font-bold text-gray-900">No Attendance Record</h4>
+              <p className="text-gray-500 text-sm mt-1">You haven't checked in for today yet.</p>
+              <Button className="mt-6" variant="primary" onClick={() => window.location.href='/attendance'}>Check-in Now</Button>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Quick Links / Message */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card hover onClick={() => window.location.href='/work-updates'} className="cursor-pointer group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center group-hover:bg-green-600 transition-colors">
+              <Plus size={24} className="text-green-600 group-hover:text-white transition-colors" />
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-900">Log Work Update</h4>
+              <p className="text-sm text-gray-500">Record your tasks and progress</p>
+            </div>
+          </div>
+        </Card>
+        <Card hover onClick={() => window.location.href='/profile'} className="cursor-pointer group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+              <Users size={24} className="text-blue-600 group-hover:text-white transition-colors" />
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-900">View Profile</h4>
+              <p className="text-sm text-gray-500">Personal information & settings</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 function AdminDashboardView() {
   const [employees, setEmployees] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   
-  // Modals state
-  const [showCreate, setShowCreate] = useState(false);
-  const [showReset, setShowReset] = useState(null); // stores employee item
+  const [showReset, setShowReset] = useState(null);
   const [newPass, setNewPass] = useState('');
   
   const { addToast } = useToast();
@@ -187,7 +315,6 @@ function AdminDashboardView() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="Total Employees" value={employees.length} icon={Users} color="bg-blue-600" />
         <StatCard label="Active Today" value={presentToday} icon={CheckCircle} color="bg-green-600" />
@@ -216,7 +343,7 @@ function AdminDashboardView() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 border-none">
+            <tbody className="divide-y divide-gray-50">
               {filtered.map((emp) => (
                 <tr key={emp._id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-4 py-3.5">
@@ -228,29 +355,15 @@ function AdminDashboardView() {
                     </div>
                   </td>
                   <td className="px-4 py-3.5">
-                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
-                      {emp.role}
-                    </span>
+                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 capitalize">{emp.role}</span>
                   </td>
                   <td className="px-4 py-3.5 text-sm text-gray-400">
                     {emp.createdAt ? new Date(emp.createdAt).toLocaleDateString('en-IN') : '--'}
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => setShowReset(emp)}
-                        className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-blue-600 transition-colors" 
-                        title="Reset Password"
-                      >
-                        <Key size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(emp._id)}
-                        className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-red-600 transition-colors" 
-                        title="Delete Employee"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <button onClick={() => setShowReset(emp)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-blue-600 transition-colors"><Key size={16} /></button>
+                      <button onClick={() => handleDelete(emp._id)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-red-600 transition-colors"><Trash2 size={16} /></button>
                     </div>
                   </td>
                 </tr>
@@ -260,7 +373,6 @@ function AdminDashboardView() {
         </div>
       </Card>
 
-      {/* Reset Password Modal */}
       {showReset && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 relative">
@@ -292,7 +404,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 max-w-6xl">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -305,21 +416,7 @@ export default function Dashboard() {
       {user?.role === 'admin' ? (
         <AdminDashboardView />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-12 xl:col-span-7">
-            <WorkUpdateCard />
-          </div>
-          <div className="lg:col-span-12 xl:col-span-5 space-y-6">
-            <Card hover className="bg-gradient-to-br from-green-50 to-emerald-100 border-none pb-8">
-              <h3 className="text-gray-900 font-semibold mb-2">Welcome to OnIT India!</h3>
-              <p className="text-gray-600 text-sm">Use this dashboard to keep track of your daily work updates and to share progress with your admin.</p>
-            </Card>
-            <div className="grid grid-cols-2 gap-4">
-              <StatCard label="Tasks Done" value="12" icon={CheckCircle} color="bg-green-500" />
-              <StatCard label="In Progress" value="3" icon={Clock} color="bg-blue-500" />
-            </div>
-          </div>
-        </div>
+        <EmployeeDashboardView />
       )}
     </div>
   );

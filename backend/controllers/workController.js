@@ -53,3 +53,18 @@ export const getWorkUpdates = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
+// @desc    Employee gets their own work updates
+// @route   GET /api/employee/work-updates
+// @access  Private/Employee
+export const getMyWorkUpdates = async (req, res) => {
+  try {
+    const updates = await WorkUpdate.find({ employeeId: req.user._id }).sort({ createdAt: -1 }).limit(5);
+    res.json({
+      success: true,
+      message: 'My work updates retrieved successfully',
+      data: updates
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};

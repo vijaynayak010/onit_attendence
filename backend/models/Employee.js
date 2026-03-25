@@ -13,6 +13,23 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    name: {
+      type: String,
+      default: '',
+    },
+    mobile: {
+      type: String,
+      default: '',
+    },
+    employeeId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    joiningDate: {
+      type: Date,
+      default: Date.now,
+    },
     role: {
       type: String,
       enum: ['admin', 'employee'],

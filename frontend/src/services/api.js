@@ -46,11 +46,13 @@ export const workService = {
     description: data.description,
     status: data.status,
   }),
+  getMyWorkUpdates: () => api.get('/employee/work-updates'),
   getWorkUpdates: () => api.get('/admin/work-updates'),
 };
 
 export const profileService = {
-  getProfile: () => api.get('/employee/profile'),
+  getProfile: () => api.get('/users/profile'),
+  updateProfile: (data) => api.put('/users/profile', data),
 };
 
 export const attendanceService = {

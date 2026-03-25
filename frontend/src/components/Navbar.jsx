@@ -1,4 +1,5 @@
 import { Menu, Bell } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onMenuClick }) {
@@ -29,7 +30,7 @@ export default function Navbar({ onMenuClick }) {
           <Bell size={18} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full"></span>
         </button>
-        <div className="flex items-center gap-2.5 pl-3 border-l border-gray-100">
+        <Link to="/profile" className="flex items-center gap-2.5 pl-3 border-l border-gray-100 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
             <span className="text-green-700 text-sm font-bold">
               {user?.name?.[0]?.toUpperCase() || 'U'}
@@ -39,7 +40,7 @@ export default function Navbar({ onMenuClick }) {
             <p className="text-sm font-semibold text-gray-900 leading-none">{user?.name || 'User'}</p>
             <p className="text-xs text-gray-400 mt-0.5 capitalize">{user?.role || 'employee'}</p>
           </div>
-        </div>
+        </Link>
       </div>
     </header>
   );

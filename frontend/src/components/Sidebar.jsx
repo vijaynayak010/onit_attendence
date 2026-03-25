@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Clock, FileText, Shield, LogOut, X, Zap } from 'lucide-react';
+import { LayoutDashboard, Clock, FileText, Shield, LogOut, X, Zap, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
