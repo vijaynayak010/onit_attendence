@@ -1,12 +1,15 @@
-export default function Card({ children, className = '', hover = false, padding = 'md' }) {
+export default function Card({ children, className = '', hover = false, padding = 'md', glass = false }) {
   const paddings = { sm: 'p-4', md: 'p-6', lg: 'p-8' };
 
   return (
     <div
-      className={`bg-white rounded-2xl border border-gray-100 shadow-sm
-        ${hover ? 'hover:shadow-md hover:border-gray-200 transition-all duration-200' : ''}
+      className={`
+        ${glass ? 'glass' : 'bg-white border border-slate-100 shadow-premium'}
+        rounded-3xl
+        ${hover ? 'hover:shadow-premium-hover hover:border-slate-200 transition-all duration-300 hover:scale-[1.01]' : ''}
         ${paddings[padding]}
-        ${className}`}
+        ${className}
+      `}
     >
       {children}
     </div>

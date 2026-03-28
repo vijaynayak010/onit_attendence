@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Zap, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { authService } from '../services/api';
@@ -66,126 +66,110 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      {/* Background decoration */}
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Premium Background Decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-green-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)]"></div>
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo */}
-        <div className="text-center mb-8 flex flex-col items-center">
-          <img src="/logo.png" alt="OnIT India Logo" className="h-20 mb-2 object-contain" />
-          <p className="text-slate-400 mt-2 text-sm">Workforce Management Platform</p>
+      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-700">
+        {/* Logo Section */}
+        <div className="text-center mb-10 flex flex-col items-center">
+          <div className="w-24 h-24 bg-slate-900/40 backdrop-blur-xl rounded-[2rem] border border-white/5 flex items-center justify-center shadow-2xl shadow-emerald-500/10 mb-6 transform hover:scale-110 transition-transform duration-500">
+             <img src="/logo.png" alt="OnIT India" className="w-16 h-16 object-contain" />
+          </div>
+          <h1 className="text-white text-4xl font-black tracking-tighter">OnIT <span className="text-emerald-400 font-black">India</span></h1>
+          <p className="text-slate-500 mt-3 text-[10px] font-black uppercase tracking-[0.3em]">Workforce Management Node</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 shadow-2xl">
-          <h2 className="text-white text-xl font-semibold mb-1">Sign in to your account</h2>
-          <p className="text-slate-400 text-sm mb-8">Enter your credentials to continue</p>
+        {/* Login Card */}
+        <div className="bg-slate-900/40 backdrop-blur-2xl rounded-[2.5rem] p-10 shadow-2xl border border-white/5 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"></div>
+          
+          <div className="mb-8">
+            <h2 className="text-white text-2xl font-black tracking-tight mb-2">Workspace Access</h2>
+            <p className="text-slate-400 text-sm font-medium">Identify yourself to continue.</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Role Selection */}
-            <div className="flex bg-white/5 rounded-xl p-1 border border-white/10">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Role Switcher */}
+            <div className="flex bg-slate-950/50 rounded-2xl p-1.5 border border-white/5 shadow-inner">
               <button
                 type="button"
-                onClick={() => {
-                  setRole('employee');
-                  setEmail('');
-                  setPassword('');
-                  setErrors({});
-                }}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                  role === 'employee' ? 'bg-green-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                onClick={() => { setRole('employee'); setErrors({}); }}
+                className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+                  role === 'employee' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
                 Employee
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setRole('admin');
-                  setEmail('');
-                  setPassword('');
-                  setErrors({});
-                }}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                  role === 'admin' ? 'bg-green-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                onClick={() => { setRole('admin'); setErrors({}); }}
+                className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+                  role === 'admin' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
                 Admin
               </button>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-300">
-                Email Address <span className="text-red-400">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
-                  <Mail size={16} />
+            <div className="space-y-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Secure Email</label>
+                <div className="group relative">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-emerald-500 transition-colors">
+                    <Mail size={18} />
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setErrors(v => ({ ...v, email: '' })); }}
+                    placeholder="name@company.com"
+                    className={`w-full rounded-2xl border bg-slate-950/40 pl-12 pr-4 py-4 text-sm text-white placeholder-slate-600
+                      transition-all outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-slate-950/60
+                      ${errors.email ? 'border-red-500/50' : 'border-white/5 hover:border-white/10 focus:border-emerald-500/50'}`}
+                  />
                 </div>
-                <input
-                  type="email"
-                  value={email}
-                  autoComplete="off"
-                  onChange={(e) => { setEmail(e.target.value); setErrors(v => ({ ...v, email: '' })); }}
-                  placeholder="you@company.com"
-                  className={`w-full rounded-xl border bg-white/5 pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500
-                    transition-all outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500
-                    ${errors.email ? 'border-red-500/50' : 'border-white/10 hover:border-white/20'}`}
-                />
+                {errors.email && <p className="text-[10px] font-bold text-red-400 mt-1 ml-1">{errors.email}</p>}
               </div>
-              {errors.email && <p className="text-xs text-red-400">{errors.email}</p>}
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Access Token</label>
+                <div className="group relative">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-emerald-500 transition-colors">
+                    <Lock size={18} />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setErrors(v => ({ ...v, password: '' })); }}
+                    placeholder="••••••••"
+                    className={`w-full rounded-2xl border bg-slate-950/40 pl-12 pr-4 py-4 text-sm text-white placeholder-slate-600
+                      transition-all outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-slate-950/60
+                      ${errors.password ? 'border-red-500/50' : 'border-white/5 hover:border-white/10 focus:border-emerald-500/50'}`}
+                  />
+                </div>
+                {errors.password && <p className="text-[10px] font-bold text-red-400 mt-1 ml-1">{errors.password}</p>}
+              </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-300">
-                Password <span className="text-red-400">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
-                  <Lock size={16} />
-                </div>
-                <input
-                  type="password"
-                  value={password}
-                  autoComplete="new-password"
-                  onChange={(e) => { setPassword(e.target.value); setErrors(v => ({ ...v, password: '' })); }}
-                  placeholder="••••••••"
-                  className={`w-full rounded-xl border bg-white/5 pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500
-                    transition-all outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500
-                    ${errors.password ? 'border-red-500/50' : 'border-white/10 hover:border-white/20'}`}
-                />
-              </div>
-              {errors.password && <p className="text-xs text-red-400">{errors.password}</p>}
-            </div>
-
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className="w-full mt-2 bg-green-500 hover:bg-green-400 disabled:opacity-60 disabled:cursor-not-allowed
-                text-white font-semibold rounded-xl py-3 text-sm transition-all duration-200 shadow-lg shadow-green-500/25
-                hover:shadow-green-500/40 flex items-center justify-center gap-2 group"
+              loading={loading}
+              className="w-full py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/10"
+              variant="primary"
+              icon={ArrowRight}
             >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  Sign In
-                  <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-                </>
-              )}
-            </button>
+              {loading ? 'Authenticating...' : 'Access Secure Session'}
+            </Button>
           </form>
         </div>
 
-        <p className="text-center text-slate-600 text-xs mt-6">
-          © 2024 OnIT India. All rights reserved.
+        <p className="text-center text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-10">
+          © {new Date().getFullYear()} OnIT India • Dark Secure Node
         </p>
       </div>
     </div>

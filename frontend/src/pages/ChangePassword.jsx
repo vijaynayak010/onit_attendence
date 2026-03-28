@@ -41,7 +41,7 @@ export default function ChangePassword() {
       
       // Update local storage and auth context
       const updatedUser = { ...user, isPasswordChanged: true };
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       
       // We re-login to update the context with the new isPasswordChanged state
       login(updatedUser, token);

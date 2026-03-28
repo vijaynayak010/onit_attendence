@@ -11,14 +11,14 @@ export default function Button({
   className = '',
   icon: Icon,
 }) {
-  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed';
+  const base = 'inline-flex items-center justify-center gap-2 font-bold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]';
 
   const variants = {
-    primary: 'bg-green-600 hover:bg-green-700 active:bg-green-800 text-white focus:ring-green-500 shadow-sm hover:shadow-md',
-    secondary: 'bg-slate-900 hover:bg-slate-800 text-white focus:ring-slate-500 shadow-sm',
-    outline: 'bg-white border-2 border-green-600 text-green-600 hover:bg-green-50 focus:ring-green-500',
-    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-300',
-    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500 shadow-sm',
+    primary: 'bg-gradient-to-br from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white focus:ring-brand-500 shadow-premium hover:shadow-premium-hover',
+    secondary: 'bg-slate-900 hover:bg-slate-800 text-white focus:ring-slate-500 shadow-premium',
+    outline: 'bg-white border-2 border-brand-600 text-brand-600 hover:bg-brand-50 focus:ring-brand-500 shadow-sm',
+    ghost: 'bg-transparent hover:bg-slate-100 text-slate-700 focus:ring-slate-300',
+    danger: 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500 shadow-premium',
   };
 
   const sizes = {

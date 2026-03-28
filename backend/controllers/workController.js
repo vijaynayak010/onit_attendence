@@ -29,14 +29,37 @@ export const addWork = async (req, res) => {
 // @access  Private/Admin
 export const getWorkUpdates = async (req, res) => {
   try {
-    const updates = await WorkUpdate.find().populate('employeeId', 'email').sort({ date: -1 });
+    const { date, employeeId, month } = req.query; // Added month
+    let query = {};
+
+    if (month) {
+      const [year, m] = month.split('-').map(Number);
+      const startOfMonth = new Date(year, m - 1, 1);
+      const endOfMonth = new Date(year, m, 1);
+      query.date = { $gte: startOfMonth, $lt: endOfMonth };
+    } else if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      query.date = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    if (employeeId) {
+      query.employeeId = employeeId;
+    }
+
+    const updates = await WorkUpdate.find(query)
+      .populate('employeeId', 'email joiningDate')
+      .sort({ date: -1 });
 
     const formattedUpdates = updates.map(update => {
-      // Trying to get username from email if name doesn't exist. Model only has 'email'.
       const employeeName = update.employeeId ? update.employeeId.email.split('@')[0] : 'Unknown';
       
       return {
+        _id: update._id,
         employeeName,
+        joiningDate: update.employeeId?.joiningDate,
         date: update.date.toISOString().split('T')[0], // YYYY-MM-DD
         taskTitle: update.taskTitle,
         description: update.description,
@@ -53,12 +76,29 @@ export const getWorkUpdates = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
-// @desc    Employee gets their own work updates
+
+// @desc    Employee gets their own work updates (or admin gets their own)
 // @route   GET /api/employee/work-updates
-// @access  Private/Employee
+// @access  Private
 export const getMyWorkUpdates = async (req, res) => {
   try {
-    const updates = await WorkUpdate.find({ employeeId: req.user._id }).sort({ createdAt: -1 }).limit(5);
+    const { date, month } = req.query;
+    let query = { employeeId: req.user._id };
+
+    if (month) {
+      const [year, m] = month.split('-').map(Number);
+      const startOfMonth = new Date(year, m - 1, 1);
+      const endOfMonth = new Date(year, m, 1);
+      query.date = { $gte: startOfMonth, $lt: endOfMonth };
+    } else if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      query.date = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    const updates = await WorkUpdate.find(query).sort({ createdAt: -1 });
     res.json({
       success: true,
       message: 'My work updates retrieved successfully',

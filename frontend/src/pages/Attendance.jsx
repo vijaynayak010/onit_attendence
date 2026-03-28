@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { LogIn, LogOut, Clock, CheckCircle, AlertCircle, MinusCircle, Calendar } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
-import { attendanceService } from '../services/api';
+import { attendanceService, profileService } from '../services/api';
 import Card from '../components/Card';
 import Button from '../components/Button';
 
@@ -26,6 +26,7 @@ const StatusBadge = ({ status }) => {
     present: { label: 'Present', cls: 'bg-green-100 text-green-700 border border-green-200', dot: 'bg-green-500', Icon: CheckCircle },
     'partially-present': { label: 'Partially Present', cls: 'bg-amber-100 text-amber-700 border border-amber-200', dot: 'bg-amber-500', Icon: MinusCircle },
     absent: { label: 'Absent', cls: 'bg-red-100 text-red-700 border border-red-200', dot: 'bg-red-500', Icon: AlertCircle },
+    weekend: { label: 'Off Day', cls: 'bg-slate-100 text-slate-500 border border-slate-200', dot: 'bg-slate-300', Icon: Calendar },
   };
   const s = map[status] || map['absent'];
   return (
@@ -40,8 +41,10 @@ export default function Attendance() {
   const [status, setStatus] = useState('not-checked-in');
   const [todayRecord, setTodayRecord] = useState(null);
   const [history, setHistory] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [loading, setLoading] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [joiningDate, setJoiningDate] = useState(null);
   const [liveTime, setLiveTime] = useState(new Date());
   const [elapsed, setElapsed] = useState(null);
   const { addToast } = useToast();
@@ -73,20 +76,32 @@ export default function Attendance() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await attendanceService.getMyAttendance();
-        const records = res.data.data || [];
+        const [attendRes, profRes] = await Promise.all([
+          attendanceService.getMyAttendance({ month: selectedMonth }),
+          profileService.getProfile()
+        ]);
+        const records = attendRes.data.data || [];
         setHistory(records);
-        const today = records.find((r) => r.date === todayStr());
-        if (today) {
-          setTodayRecord(today);
-          if (today.checkOut) setStatus('checked-out');
-          else if (today.checkIn) setStatus('checked-in');
+        setJoiningDate(profRes.data.data?.joiningDate);
+        
+        // Only set today's status if we are looking at the current month
+        const today = todayStr();
+        if (today.startsWith(selectedMonth)) {
+          const todayRec = records.find((r) => r.date === today);
+          if (todayRec) {
+            setTodayRecord(todayRec);
+            if (todayRec.checkOut) setStatus('checked-out');
+            else if (todayRec.checkIn) setStatus('checked-in');
+          } else {
+            setTodayRecord(null);
+            setStatus('not-checked-in');
+          }
         }
       } catch { /* ignore */ }
       finally { setInitialLoading(false); }
     };
     load();
-  }, []);
+  }, [selectedMonth]);
 
   const handleCheckIn = async () => {
     setLoading('in');
@@ -130,6 +145,52 @@ export default function Attendance() {
     'checked-out':    { label: 'Work Complete', ring: 'ring-slate-200', bg: 'bg-slate-50', iconColor: 'text-slate-500', dot: 'bg-slate-400' },
   };
   const cfg = statusConfig[status];
+
+  // Logic to generate all calendar days for the selected month
+  const mergedHistory = (() => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const dates = [];
+    
+    // Filter based on joining date
+    const today = todayStr();
+    const currentMonthStr = today.slice(0, 7);
+    
+    // If selected month is in the future, show nothing
+    if (selectedMonth > currentMonthStr) {
+      return [];
+    }
+
+    const isCurrentMonth = today.startsWith(selectedMonth);
+    const maxDay = isCurrentMonth ? parseInt(today.split('-')[2]) : daysInMonth;
+
+    const jDate = joiningDate ? new Date(joiningDate).toISOString().slice(0, 10) : '0000-00-00';
+
+    for (let i = 1; i <= maxDay; i++) {
+      const dStr = `${year}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      if (dStr >= jDate) {
+        dates.push(dStr);
+      }
+    }
+
+    return dates.reverse().map(date => {
+      const record = history.find(h => h.date === date);
+      if (record) return { ...record, type: 'record' };
+      
+      const dayOfWeek = new Date(date).getDay();
+      return { 
+        date, 
+        status: dayOfWeek === 0 ? 'weekend' : 'absent',
+        type: 'placeholder'
+      };
+    });
+  })();
+
+  const stats = {
+    present: history.filter(r => r.status === 'present').length,
+    partial: history.filter(r => r.status === 'partially-present').length,
+    absent: mergedHistory.filter(r => r.status === 'absent').length,
+  };
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -195,28 +256,40 @@ export default function Attendance() {
         )}
 
         {/* Buttons */}
-        <div className="flex gap-3">
-          <Button
-            onClick={handleCheckIn}
-            disabled={status !== 'not-checked-in'}
-            loading={loading === 'in'}
-            icon={LogIn}
-            size="lg"
-            className="flex-1"
-          >
-            Check In
-          </Button>
-          <Button
-            onClick={handleCheckOut}
-            disabled={status !== 'checked-in'}
-            loading={loading === 'out'}
-            variant="secondary"
-            icon={LogOut}
-            size="lg"
-            className="flex-1"
-          >
-            Check Out
-          </Button>
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-3">
+            <Button
+              onClick={handleCheckIn}
+              disabled={status !== 'not-checked-in' || new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000).getDay() === 0}
+              loading={loading === 'in'}
+              icon={LogIn}
+              size="lg"
+              className="flex-1"
+            >
+              {new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000).getDay() === 0 ? 'Disabled (Sunday)' : 'Check In'}
+            </Button>
+            <Button
+              onClick={handleCheckOut}
+              disabled={status !== 'checked-in'}
+              loading={loading === 'out'}
+              variant="secondary"
+              icon={LogOut}
+              size="lg"
+              className="flex-1"
+            >
+              Check Out
+            </Button>
+          </div>
+          
+          {new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000).getDay() === 0 && status === 'not-checked-in' && (
+            <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-4 text-center">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center justify-center gap-2">
+                <Calendar size={14} />
+                Sunday Policy: Weekly Off Enabled
+              </p>
+              <p className="text-[10px] text-slate-400 mt-1">Attendance logging is restricted on Sundays.</p>
+            </div>
+          )}
         </div>
 
         {/* Rules note */}
@@ -227,28 +300,104 @@ export default function Attendance() {
         </p>
       </Card>
 
-      {/* History */}
+      {/* Monthly Summary Insights */}
       {history.length > 0 && (
-        <Card>
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Calendar size={16} className="text-gray-400" />
-            Attendance History <span className="text-gray-400 font-normal text-sm">(Last 30 days)</span>
-          </h3>
-          <div className="space-y-2">
-            {history.map((item) => (
-              <div key={item._id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <p className="text-sm font-medium text-gray-900">{item.date}</p>
-                    <StatusBadge status={item.status} />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    In: {fmtTime(item.checkIn)} &nbsp;→&nbsp; Out: {fmtTime(item.checkOut)}
-                    {item.totalHours != null && <span className="ml-2 font-medium text-gray-600">({fmtMins(item.totalHours)})</span>}
-                  </p>
-                </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card padding="md" className="border-l-4 border-l-green-500 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
+                <CheckCircle size={20} className="text-green-600" />
               </div>
-            ))}
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Total Present</p>
+                <p className="text-xl font-black text-gray-900 leading-none">{history.filter(r => r.status === 'present').length} Days</p>
+              </div>
+            </div>
+          </Card>
+          <Card padding="md" className="border-l-4 border-l-amber-500 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                <MinusCircle size={20} className="text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Partially Present</p>
+                <p className="text-xl font-black text-gray-900 leading-none">{history.filter(r => r.status === 'partially-present').length} Days</p>
+              </div>
+            </div>
+          </Card>
+          <Card padding="md" className="border-l-4 border-l-blue-600 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                <Clock size={20} className="text-blue-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Total Work Mins</p>
+                <p className="text-xl font-black text-gray-900 leading-none">
+                  {fmtMins(history.reduce((acc, r) => acc + (r.totalHours || 0), 0))}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* History Area */}
+      {history.length >= 0 && (
+        <Card>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-50">
+            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <Calendar size={18} className="text-blue-500" />
+              Attendance Log
+            </h3>
+            
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:block">Filter Month:</p>
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
+              />
+            </div>
+          </div>
+          <div className="space-y-3">
+            {mergedHistory.length === 0 ? (
+              <div className="py-20 text-center">
+                <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto text-gray-300 mb-3">
+                  <Calendar size={24} />
+                </div>
+                <p className="text-gray-500 font-bold">No records found</p>
+                <p className="text-xs text-gray-400">
+                  {selectedMonth < (joiningDate?.slice(0, 7) || '9999-12') 
+                    ? `You joined OnIT India on ${new Date(joiningDate).toLocaleDateString()}` 
+                    : "No attendance data available for this month"}
+                </p>
+              </div>
+            ) : (
+              mergedHistory.map((item) => (
+                <div key={item.date} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors
+                  ${item.type === 'placeholder' ? 'bg-gray-50/50 border-gray-100 opacity-75' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <p className="text-sm font-medium text-gray-900">
+                        {new Date(item.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', weekday: 'short' })}
+                      </p>
+                      <StatusBadge status={item.status} />
+                    </div>
+                    {item.type === 'record' ? (
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        In: {fmtTime(item.checkIn)} &nbsp;→&nbsp; Out: {fmtTime(item.checkOut)}
+                        {item.totalHours != null && <span className="ml-2 font-medium text-gray-600">({fmtMins(item.totalHours)})</span>}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-gray-400 italic mt-0.5">
+                        {item.status === 'weekend' ? 'System marked as weekly off' : 'No attendance record found for this date'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
       )}

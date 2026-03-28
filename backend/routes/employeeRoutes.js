@@ -7,9 +7,9 @@ import { validateWorkUpdate } from '../middleware/validator.js';
 
 const router = express.Router();
 
-// Routes require employee privileges
-router.post('/add-work', protect, employeeOnly, validateWorkUpdate, addWork);
-router.get('/work-updates', protect, employeeOnly, getMyWorkUpdates);
+// Routes require authentication
+router.post('/add-work', protect, validateWorkUpdate, addWork);
+router.get('/work-updates', protect, getMyWorkUpdates);
 router.get('/profile', protect, employeeOnly, getEmployeeProfile);
 
 export default router;

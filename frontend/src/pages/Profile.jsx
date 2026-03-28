@@ -67,7 +67,7 @@ export default function Profile() {
       setIsEditing(false);
       
       // Update auth context if email or name changed
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       login({ ...user, ...res.data.data }, token);
     } catch (err) {
       addToast(err.response?.data?.message || 'Failed to update profile', 'error');

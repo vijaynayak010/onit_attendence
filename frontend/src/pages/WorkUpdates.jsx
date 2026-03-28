@@ -19,12 +19,13 @@ export default function WorkUpdates() {
   const [fetching, setFetching] = useState(true);
   const [updates, setUpdates] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const { addToast } = useToast();
 
-  const fetchUpdates = async () => {
+  const fetchUpdates = async (date) => {
     setFetching(true);
     try {
-      const res = await workService.getMyWorkUpdates();
+      const res = await workService.getMyWorkUpdates({ date: date || selectedDate });
       setUpdates(res.data.data || []);
     } catch (err) {
       addToast('Failed to load work updates', 'error');
@@ -34,8 +35,8 @@ export default function WorkUpdates() {
   };
 
   useEffect(() => {
-    fetchUpdates();
-  }, []);
+    fetchUpdates(selectedDate);
+  }, [selectedDate]);
 
   const validate = () => {
     const e = {};
@@ -137,6 +138,26 @@ export default function WorkUpdates() {
 
         {/* Right: History & Filters */}
         <div className="lg:col-span-7 space-y-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Date:</span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={e => setSelectedDate(e.target.value)}
+                className="flex-1 sm:w-40 rounded-xl border border-gray-100 bg-gray-50/50 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500 transition-all font-medium"
+              />
+              {selectedDate && (
+                <button 
+                  onClick={() => setSelectedDate('')}
+                  className="text-[10px] font-bold text-red-400 hover:text-red-500 uppercase tracking-widest whitespace-nowrap"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
             <button
               onClick={() => setFilter('all')}

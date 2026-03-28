@@ -94,15 +94,16 @@ function WorkUpdateForm({ onUpdate }) {
   );
 }
 
-function StatCard({ label, value, icon: Icon, color }) {
+function StatCard({ label, value, icon: Icon, color, delay }) {
   return (
-    <Card hover>
-      <div className="flex items-center justify-between">
+    <Card hover className={`border-none shadow-premium relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-500`} style={{ animationDelay: `${delay}ms` }}>
+      <div className={`absolute top-0 right-0 w-24 h-24 translate-x-12 -translate-y-12 rounded-full opacity-10 group-hover:scale-150 transition-transform duration-700 ${color}`}></div>
+      <div className="flex items-center justify-between relative z-10">
         <div>
-          <p className="text-sm text-gray-500 font-medium">{label}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{label}</p>
+          <p className="text-3xl font-black text-slate-900 tracking-tight">{value}</p>
         </div>
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${color}`}>
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:rotate-6 transition-transform ${color}`}>
           <Icon size={22} className="text-white" />
         </div>
       </div>
@@ -114,7 +115,25 @@ function EmployeeDashboardView() {
   const [updates, setUpdates] = useState([]);
   const [attendance, setAttendance] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [elapsed, setElapsed] = useState(null);
   const { addToast } = useToast();
+
+  // Live elapsed time tracker for active sessions
+  useEffect(() => {
+    let timer;
+    if (attendance && attendance.checkIn && !attendance.checkOut) {
+      const updateElapsed = () => {
+        const diff = Date.now() - new Date(attendance.checkIn).getTime();
+        const mins = Math.max(0, Math.floor(diff / 60000));
+        setElapsed(`${Math.floor(mins / 60)}h ${mins % 60}m`);
+      };
+      updateElapsed();
+      timer = setInterval(updateElapsed, 60000);
+    } else {
+      setElapsed(null);
+    }
+    return () => clearInterval(timer);
+  }, [attendance]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -151,11 +170,11 @@ function EmployeeDashboardView() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Work Statistics Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Updates" value={stats.total} icon={FileText} color="bg-slate-700" />
-        <StatCard label="Completed" value={stats.completed} icon={CheckCircle} color="bg-green-600" />
-        <StatCard label="In Progress" value={stats.inProgress} icon={Clock} color="bg-blue-600" />
-        <StatCard label="Blocked" value={stats.blocked} icon={XCircle} color="bg-red-500" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard label="Total Updates" value={stats.total} icon={FileText} color="bg-slate-600" delay={100} />
+        <StatCard label="Completed" value={stats.completed} icon={CheckCircle} color="bg-emerald-500" delay={200} />
+        <StatCard label="In Progress" value={stats.inProgress} icon={Clock} color="bg-blue-500" delay={300} />
+        <StatCard label="Blocked" value={stats.blocked} icon={XCircle} color="bg-red-500" delay={400} />
       </div>
 
       {/* Attendance Section */}
@@ -199,7 +218,9 @@ function EmployeeDashboardView() {
                     <Loader2 size={16} className="text-purple-600" />
                   </div>
                   <p className="text-lg font-bold text-gray-900">
-                    {attendance.totalHours ? `${Math.floor(attendance.totalHours / 60)}h ${attendance.totalHours % 60}m` : 'Calculating...'}
+                    {attendance.totalHours !== null 
+                      ? `${Math.floor(attendance.totalHours / 60)}h ${attendance.totalHours % 60}m` 
+                      : (elapsed || 'Calculating...')}
                   </p>
                 </div>
               </div>
@@ -226,30 +247,42 @@ function EmployeeDashboardView() {
         </Card>
       </div>
 
-      {/* Quick Links / Message */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card hover onClick={() => window.location.href='/work-updates'} className="cursor-pointer group">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center group-hover:bg-green-600 transition-colors">
-              <Plus size={24} className="text-green-600 group-hover:text-white transition-colors" />
+      {/* Bottom Section: Recent Activity */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Recent Activity</h2>
+          <Button variant="ghost" size="sm" onClick={() => window.location.href='/work-updates'} className="text-[10px] uppercase font-bold tracking-widest">
+            View All History
+          </Button>
+        </div>
+        
+        {updates.length === 0 ? (
+          <Card className="text-center py-16">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
+              <FileText size={24} className="text-gray-200" />
             </div>
-            <div>
-              <h4 className="font-bold text-gray-900">Log Work Update</h4>
-              <p className="text-sm text-gray-500">Record your tasks and progress</p>
-            </div>
+            <p className="text-gray-500 font-bold">No updates logged yet</p>
+            <p className="text-gray-400 text-sm mt-1">Your work logs will appear here</p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {updates.slice(0, 6).map((u, i) => (
+              <Card key={i} padding="md" className="border-l-4 border-l-green-500 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center justify-between mb-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    <span className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                      <Calendar size={10} />
+                      {new Date(u.createdAt || u.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    </span>
+                    <span className="text-green-600 bg-green-50 px-2 py-1 rounded-md shadow-sm">{u.status}</span>
+                  </div>
+                  <h4 className="font-bold text-gray-900 text-base mb-2 line-clamp-1">{u.title || u.taskTitle}</h4>
+                  <p className="text-gray-500 text-xs leading-relaxed line-clamp-2">{u.description}</p>
+                </div>
+              </Card>
+            ))}
           </div>
-        </Card>
-        <Card hover onClick={() => window.location.href='/profile'} className="cursor-pointer group">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-              <Users size={24} className="text-blue-600 group-hover:text-white transition-colors" />
-            </div>
-            <div>
-              <h4 className="font-bold text-gray-900">View Profile</h4>
-              <p className="text-sm text-gray-500">Personal information & settings</p>
-            </div>
-          </div>
-        </Card>
+        )}
       </div>
     </div>
   );
@@ -315,10 +348,10 @@ function AdminDashboardView() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard label="Total Employees" value={employees.length} icon={Users} color="bg-blue-600" />
-        <StatCard label="Active Today" value={presentToday} icon={CheckCircle} color="bg-green-600" />
-        <StatCard label="Support Staff" value="Admin" icon={Clock} color="bg-purple-600" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard label="Total Employees" value={employees.length} icon={Users} color="bg-blue-600" delay={100} />
+        <StatCard label="Active Today" value={presentToday} icon={CheckCircle} color="bg-emerald-500" delay={200} />
+        <StatCard label="Management" value="Admin" icon={Clock} color="bg-brand-800" delay={300} />
       </div>
 
       <Card padding="sm">
@@ -403,14 +436,33 @@ export default function Dashboard() {
   const role = user?.role || 'Employee';
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {getGreeting()}, {name.split(' ')[0]} 👋
-          </h1>
-          <p className="text-gray-500 mt-1.5">Here's your {role} workspace for today.</p>
-        </div>
+    <div className="space-y-10 max-w-7xl mx-auto pb-20">
+      {/* Premium Header/Greeting */}
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-[2.5rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+        <Card glass padding="lg" className="relative flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -translate-y-32 translate-x-32 blur-3xl"></div>
+          
+          <div className="relative z-10">
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+              {getGreeting()}, <span className="text-emerald-500">{name.split(' ')[0]}</span> <span className="inline-block animate-bounce-slow">👋</span>
+            </h1>
+            <p className="text-slate-500 mt-2 font-medium flex items-center gap-2 uppercase text-[10px] tracking-[0.2em]">
+              <LayoutDashboard size={14} className="text-emerald-500" />
+              Your {role} Perspective • {new Date().toLocaleDateString('en-IN', { month: 'long', day: 'numeric' })}
+            </p>
+          </div>
+
+          <div className="relative z-10 flex items-center gap-3">
+             <div className="text-right hidden sm:block">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">System Status</p>
+                <p className="text-emerald-500 text-xs font-bold flex items-center justify-end gap-1.5 mt-0.5">
+                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                   All Systems Operational
+                </p>
+             </div>
+          </div>
+        </Card>
       </div>
 
       {user?.role === 'admin' ? (

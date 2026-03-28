@@ -22,6 +22,14 @@ const computeStatus = (minutes) => {
 export const checkIn = async (req, res) => {
   try {
     const today = todayStr();
+    
+    // Check if today is Sunday (0) in IST
+    const now = new Date();
+    const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    if (ist.getDay() === 0) {
+      return res.status(400).json({ success: false, message: 'Check-in is not allowed on Sundays. It is a weekly off.' });
+    }
+
     const existing = await Attendance.findOne({ employeeId: req.user._id, date: today });
 
     if (existing && existing.checkIn) {
@@ -70,14 +78,19 @@ export const checkOut = async (req, res) => {
   }
 };
 
-// @desc    Get current employee's attendance (last 30 days)
-// @route   GET /api/attendance/my
-// @access  Employee
 export const getMyAttendance = async (req, res) => {
   try {
-    const records = await Attendance.find({ employeeId: req.user._id })
+    const { month } = req.query; // format: YYYY-MM
+    const filter = { employeeId: req.user._id };
+    
+    if (month) {
+      filter.date = { $regex: `^${month}` };
+    }
+
+    const records = await Attendance.find(filter)
       .sort({ date: -1 })
-      .limit(30);
+      .limit(month ? 100 : 30);
+
     res.json({ success: true, data: records });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err.message });
@@ -93,10 +106,10 @@ export const getAllAttendance = async (req, res) => {
     const filterDate = date || todayStr();
 
     // Get all employees
-    const allEmployees = await Employee.find({ role: 'employee' }).select('email _id');
+    const allEmployees = await Employee.find({ role: 'employee' }).select('email _id joiningDate');
 
     // Get attendance records for that date
-    const records = await Attendance.find({ date: filterDate }).populate('employeeId', 'email');
+    const records = await Attendance.find({ date: filterDate }).populate('employeeId', 'email joiningDate');
 
     // Build a map by employeeId for quick lookup
     const recordMap = {};
@@ -111,6 +124,7 @@ export const getAllAttendance = async (req, res) => {
         employeeId: emp._id,
         employeeName: emp.email.split('@')[0],
         employeeEmail: emp.email,
+        joiningDate: emp.joiningDate,
         date: filterDate,
         checkIn: r?.checkIn || null,
         checkOut: r?.checkOut || null,
@@ -120,6 +134,26 @@ export const getAllAttendance = async (req, res) => {
     });
 
     res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
+  }
+};
+
+export const getEmployeeAttendanceByAdmin = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const { month } = req.query; // format: YYYY-MM
+    const filter = { employeeId };
+    
+    if (month) {
+      filter.date = { $regex: `^${month}` };
+    }
+
+    const records = await Attendance.find(filter)
+      .sort({ date: -1 })
+      .limit(month ? 100 : 60); 
+
+    res.json({ success: true, data: records });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }

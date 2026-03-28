@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import Attendance from './pages/Attendance';
 import ChangePassword from './pages/ChangePassword';
 import AdminDashboard from './pages/AdminDashboard';
+import Tasks from './pages/Tasks';
 
 export default function App() {
   return (
@@ -33,10 +34,11 @@ export default function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route index element={<Navigate to="/login" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="work-updates" element={<WorkUpdates />} />
                 <Route path="attendance" element={<Attendance />} />
+                <Route path="tasks" element={<Tasks />} />
                 <Route path="profile" element={<Profile />} />
                 <Route
                   path="admin"

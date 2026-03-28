@@ -9,7 +9,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -18,8 +18,8 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(err);
@@ -46,8 +46,8 @@ export const workService = {
     description: data.description,
     status: data.status,
   }),
-  getMyWorkUpdates: () => api.get('/employee/work-updates'),
-  getWorkUpdates: () => api.get('/admin/work-updates'),
+  getMyWorkUpdates: (params) => api.get('/employee/work-updates', { params }),
+  getWorkUpdates: (params) => api.get('/admin/work-updates', { params }),
 };
 
 export const profileService = {
@@ -55,14 +55,32 @@ export const profileService = {
   updateProfile: (data) => api.put('/users/profile', data),
 };
 
+export const taskService = {
+  // Admin methods
+  createTask: (data) => api.post('/tasks', data),
+  getAdminTasks: () => api.get('/tasks/admin'),
+  deleteTask: (id) => api.delete(`/tasks/${id}`),
+  
+  // Shared/Employee methods
+  getMyTasks: () => api.get('/tasks/my'),
+  updateTaskStatus: (id, status) => api.patch(`/tasks/${id}/status`, { status }),
+};
+
 export const attendanceService = {
   checkIn: () => api.post('/attendance/check-in'),
   checkOut: () => api.post('/attendance/check-out'),
-  getMyAttendance: () => api.get('/attendance/my'),
+  getMyAttendance: (params) => api.get('/attendance/my', { params }),
 };
 
 export const adminAttendanceService = {
   getAll: (date) => api.get('/attendance/all', { params: date ? { date } : {} }),
+  getEmployeeAttendance: (id, params) => api.get(`/attendance/employee/${id}`, { params }),
+};
+
+export const notificationService = {
+  getNotifications: () => api.get('/notifications'),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.patch('/notifications/read-all'),
 };
 
 export default api;
