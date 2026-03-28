@@ -6,10 +6,22 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm text-gray-500 font-medium">Loading...</p>
+      <div className="h-screen flex items-center justify-center bg-slate-950 relative overflow-hidden">
+        {/* Background Decoration */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40%] h-[40%] bg-brand-500/10 rounded-full blur-[120px] animate-pulse"></div>
+        
+        <div className="relative z-10 flex flex-col items-center gap-6">
+          <div className="w-20 h-20 bg-slate-900/40 backdrop-blur-xl rounded-[2rem] border border-white/5 flex items-center justify-center shadow-2xl shadow-brand-500/10 animate-transition-in">
+             <img src="/logo.png" alt="OnIT India" className="w-12 h-12 object-contain animate-pulse" />
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-brand-500 animate-bounce [animation-delay:-0.3s]"></div>
+              <div className="w-2 h-2 rounded-full bg-brand-500 animate-bounce [animation-delay:-0.15s]"></div>
+              <div className="w-2 h-2 rounded-full bg-brand-500 animate-bounce"></div>
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 animate-pulse">Initializing Session</p>
+          </div>
         </div>
       </div>
     );
