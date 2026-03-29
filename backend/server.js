@@ -23,6 +23,18 @@ connectDB();
 
 const app = express();
 
+// Prevent server crashes from unhandled promise rejections (e.g., DB link drop)
+process.on('unhandledRejection', (err) => {
+  console.error(`[CRITICAL] Unhandled Rejection: ${err.message}`);
+  // Keep the server alive but log the detail
+});
+
+// Prevent crashes from synchronous uncaught errors
+process.on('uncaughtException', (err) => {
+  console.error(`[CRITICAL] Uncaught Exception: ${err.message}`);
+  // Log and let the server attempt to continue or gracefully exit if needed
+});
+
 // Security Middleware
 app.use(helmet({
   crossOriginResourcePolicy: false,
@@ -31,7 +43,7 @@ app.use(helmet({
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Limit each IP to 1000 requests per windowMs
+  max: 3000, // Increased limit for concurrent rendering
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -43,7 +55,8 @@ app.use('/api', limiter);
 
 // Performance & Logging
 app.use(compression());
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+// Improved morgan format to prevent object stringification issues
+app.use(morgan(':method :url :status :response-time ms - :res[content-length]'));
 
 // Middleware
 const corsOptions = {
@@ -89,8 +102,8 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+const server = app.listen(PORT, () => {
+  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
 
-export default app;
+export default server;

@@ -29,6 +29,9 @@ const workUpdateSchema = new mongoose.Schema(
   }
 );
 
+// Index for faster queries per employee
+workUpdateSchema.index({ employeeId: 1, date: -1 });
+
 const WorkUpdate = mongoose.model('WorkUpdate', workUpdateSchema);
 
 export default WorkUpdate;

@@ -5,6 +5,10 @@ import Notification from '../models/Notification.js';
 // @access  Private
 export const getMyNotifications = async (req, res) => {
   try {
+    if (!req.user || !req.user._id) {
+       return res.status(401).json({ success: false, message: 'User context missing' });
+    }
+
     const notifications = await Notification.find({ recipient: req.user._id })
       .sort({ createdAt: -1 })
       .limit(20);

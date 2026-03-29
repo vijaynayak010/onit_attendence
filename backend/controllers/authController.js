@@ -18,6 +18,7 @@ export const adminLogin = async (req, res) => {
     const user = await Employee.findOne({ email });
 
     if (user && user.role === 'admin' && (await bcrypt.compare(password, user.password))) {
+      console.log(`[AUTH] Admin login success: ${email}`);
       res.json({
         success: true,
         message: 'Admin logged in successfully',
@@ -30,6 +31,7 @@ export const adminLogin = async (req, res) => {
         },
       });
     } else {
+      console.warn(`[AUTH] Admin login failure: ${email} - ${!user ? 'User not found' : user.role !== 'admin' ? 'Role mismatch' : 'Invalid password'}`);
       res.status(401).json({ success: false, message: 'Invalid admin email or password' });
     }
   } catch (error) {
@@ -47,6 +49,7 @@ export const employeeLogin = async (req, res) => {
     const user = await Employee.findOne({ email });
 
     if (user && user.role === 'employee' && (await bcrypt.compare(password, user.password))) {
+      console.log(`[AUTH] Employee login success: ${email}`);
       if (!user.isPasswordChanged) {
         return res.json({
            success: true,
@@ -75,6 +78,7 @@ export const employeeLogin = async (req, res) => {
         },
       });
     } else {
+      console.warn(`[AUTH] Employee login failure: ${email} - ${!user ? 'User not found' : user.role !== 'employee' ? 'Role mismatch' : 'Invalid password'}`);
       res.status(401).json({ success: false, message: 'Invalid employee email or password' });
     }
   } catch (error) {

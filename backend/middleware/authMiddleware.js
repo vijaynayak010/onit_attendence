@@ -10,6 +10,11 @@ export const protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
+      
+      if (!token) {
+        return res.status(401).json({ success: false, message: 'Not authorized, token missing' });
+      }
+
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       req.user = await Employee.findById(decoded.id).select('-password');
@@ -19,7 +24,7 @@ export const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(error);
+      console.error('[AUTH ERROR]', error.message);
       return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
   }

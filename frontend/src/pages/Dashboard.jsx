@@ -439,13 +439,13 @@ export default function Dashboard() {
     <div className="space-y-10 max-w-7xl mx-auto pb-20">
       {/* Premium Header/Greeting */}
       <div className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-[2.5rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-        <Card glass padding="lg" className="relative flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -translate-y-32 translate-x-32 blur-3xl"></div>
+        <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-[2.5rem] blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+        <Card glass padding="lg" className="relative flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden border-white/20">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full -translate-y-32 translate-x-32 blur-3xl"></div>
           
           <div className="relative z-10">
             <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-              {getGreeting()}, <span className="text-emerald-500">{name.split(' ')[0]}</span> <span className="inline-block animate-bounce-slow">👋</span>
+              {getGreeting()}, <span className="text-emerald-600">{name.split(' ')[0]}</span> <span className="inline-block animate-bounce-slow">👋</span>
             </h1>
             <p className="text-slate-500 mt-2 font-medium flex items-center gap-2 uppercase text-[10px] tracking-[0.2em]">
               <LayoutDashboard size={14} className="text-emerald-500" />
@@ -454,13 +454,13 @@ export default function Dashboard() {
           </div>
 
           <div className="relative z-10 flex items-center gap-3">
-             <div className="text-right hidden sm:block">
+              <div className="text-right hidden sm:block">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">System Status</p>
-                <p className="text-emerald-500 text-xs font-bold flex items-center justify-end gap-1.5 mt-0.5">
+                <div className="text-emerald-500 text-xs font-bold flex items-center justify-end gap-1.5 mt-0.5">
                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                    All Systems Operational
-                </p>
-             </div>
+                </div>
+              </div>
           </div>
         </Card>
       </div>

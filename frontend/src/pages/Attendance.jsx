@@ -361,43 +361,107 @@ export default function Attendance() {
             </div>
           </div>
           <div className="space-y-3">
-            {mergedHistory.length === 0 ? (
-              <div className="py-20 text-center">
-                <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto text-gray-300 mb-3">
-                  <Calendar size={24} />
-                </div>
-                <p className="text-gray-500 font-bold">No records found</p>
-                <p className="text-xs text-gray-400">
-                  {selectedMonth < (joiningDate?.slice(0, 7) || '9999-12') 
-                    ? `You joined OnIT India on ${new Date(joiningDate).toLocaleDateString()}` 
-                    : "No attendance data available for this month"}
-                </p>
+          <div className="space-y-6">
+            {/* Legend */}
+            <div className="flex flex-wrap gap-4 items-center justify-center p-3 bg-gray-50/50 rounded-xl border border-gray-100/50">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-sm bg-green-500" />
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Present</span>
               </div>
-            ) : (
-              mergedHistory.map((item) => (
-                <div key={item.date} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors
-                  ${item.type === 'placeholder' ? 'bg-gray-50/50 border-gray-100 opacity-75' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <p className="text-sm font-medium text-gray-900">
-                        {new Date(item.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', weekday: 'short' })}
-                      </p>
-                      <StatusBadge status={item.status} />
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-sm bg-amber-500" />
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Partial</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-sm bg-red-400" />
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Absent</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-sm bg-slate-200" />
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Weekend</span>
+              </div>
+            </div>
+
+            {/* Grid */}
+            <div className="grid grid-cols-7 gap-2">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                <div key={d} className="text-[10px] font-black text-gray-400 uppercase text-center mb-1">{d}</div>
+              ))}
+              {(() => {
+                const [year, month] = selectedMonth.split('-').map(Number);
+                const firstDay = new Date(year, month - 1, 1).getDay();
+                const blanks = Array(firstDay).fill(null);
+                const daysInMonth = new Date(year, month, 0).getDate();
+                const days = [];
+                for(let i=1; i<=daysInMonth; i++) {
+                  const dStr = `${year}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                  days.push(dStr);
+                }
+                
+                const statusColors = {
+                  present: 'bg-green-500 shadow-sm shadow-green-500/20',
+                  'partially-present': 'bg-amber-500 shadow-sm shadow-amber-500/20',
+                  absent: 'bg-red-400 shadow-sm shadow-red-500/10',
+                  weekend: 'bg-slate-200',
+                };
+
+                return [...blanks, ...days].map((day, idx) => {
+                  if (!day) return <div key={`blank-${idx}`} className="aspect-square" />;
+                  
+                  const record = history.find(h => h.date === day);
+                  const isToday = day === todayStr();
+                  const isFuture = day > todayStr();
+                  const dayOfWeek = new Date(day).getDay();
+                  
+                  let status = 'absent';
+                  if (record) status = record.status;
+                  else if (dayOfWeek === 0) status = 'weekend';
+                  else if (isFuture) status = 'none';
+
+                  if (status === 'none') return (
+                    <div key={day} className="aspect-square rounded-md bg-gray-50 border border-gray-100/50" />
+                  );
+
+                  return (
+                    <div 
+                      key={day} 
+                      title={`${day}: ${status}`}
+                      className={`aspect-square rounded-md transition-all duration-300 relative group
+                        ${statusColors[status] || 'bg-gray-100'} 
+                        ${isToday ? 'ring-2 ring-blue-500 ring-offset-2 scale-105 z-10' : 'hover:scale-110 hover:z-10'}`}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                         <span className="text-[8px] font-black text-white drop-shadow-sm">{new Date(day).getDate()}</span>
+                      </div>
                     </div>
-                    {item.type === 'record' ? (
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        In: {fmtTime(item.checkIn)} &nbsp;→&nbsp; Out: {fmtTime(item.checkOut)}
-                        {item.totalHours != null && <span className="ml-2 font-medium text-gray-600">({fmtMins(item.totalHours)})</span>}
-                      </p>
-                    ) : (
-                      <p className="text-[10px] text-gray-400 italic mt-0.5">
-                        {item.status === 'weekend' ? 'System marked as weekly off' : 'No attendance record found for this date'}
-                      </p>
-                    )}
+                  );
+                });
+              })()}
+            </div>
+
+            <div className="pt-4 border-t border-gray-50">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4 px-1">Detailed Logs</h4>
+              <div className="space-y-3">
+                {mergedHistory.slice(0, 5).map((item) => (
+                  <div key={item.date} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50/50">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <p className="text-sm font-bold text-gray-900">
+                          {new Date(item.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', weekday: 'short' })}
+                        </p>
+                        <StatusBadge status={item.status} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
+                ))}
+                {mergedHistory.length > 5 && (
+                  <p className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest pt-2">
+                    Showing recent 5 logs • View grid above for full month
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
           </div>
         </Card>
       )}

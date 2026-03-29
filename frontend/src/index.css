@@ -16,6 +16,10 @@
   body {
     @apply bg-slate-50 text-slate-900 font-sans;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(160, 84%, 39%, 0.03) 0, transparent 50%), 
+      radial-gradient(at 100% 100%, hsla(160, 84%, 39%, 0.05) 0, transparent 50%);
+    background-attachment: fixed;
   }
 
   /* Smooth Transitions */
@@ -24,7 +28,15 @@
   }
 
   .glass {
-    @apply bg-white/70 backdrop-blur-xl border border-white/20;
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-glass;
+  }
+
+  .glass-dark {
+    @apply bg-[#0B1120] border-white/5 shadow-2xl;
+  }
+
+  .sidebar-active-item {
+    @apply border-l-4 border-[#10B981] bg-[#10B981]/10 text-[#10B981];
   }
 
   ::-webkit-scrollbar {
