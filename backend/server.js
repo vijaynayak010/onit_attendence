@@ -64,8 +64,9 @@ const corsOptions = {
     'https://onit-attendence.vercel.app',
     'https://onit-attendence.onrender.com',
     'http://localhost:5173',
-    'http://localhost:3000'
-  ],
+    'http://localhost:3000',
+    process.env.FRONTEND_URL,
+  ].filter(Boolean),
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
