@@ -59,18 +59,34 @@ app.use(compression());
 app.use(morgan(':method :url :status :response-time ms - :res[content-length]'));
 
 // Middleware
+const allowedOrigins = [
+  'https://onit-attendence.vercel.app',
+  'https://onit-attendence.onrender.com',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
 const corsOptions = {
-  origin: [
-    'https://onit-attendence.vercel.app',
-    'https://onit-attendence.onrender.com',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    process.env.FRONTEND_URL,
-  ].filter(Boolean),
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or standard server-to-server)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.includes(origin) || 
+                     origin.endsWith('.vercel.app') || 
+                     origin.includes('localhost') ||
+                     (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL);
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Rejected origin: ${origin}`);
+      callback(null, false); // Reject but don't throw to prevent crashing the preflight handler
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
 };
 app.use(cors(corsOptions));
 app.use(express.json());
