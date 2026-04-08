@@ -9,23 +9,33 @@ dotenv.config();
 const seedAdmin = async () => {
   try {
     await connectDB();
-    const existingAdmin = await Employee.findOne({ email: 'admin@onitindia.com' });
+    const adminEmail = 'admin@onitindia.com';
+    const adminPassword = 'admin123';
+    
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(adminPassword, salt);
+    
+    const existingAdmin = await Employee.findOne({ email: adminEmail });
+    
     if (!existingAdmin) {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash('admin123', salt);
       await Employee.create({
-        email: 'admin@onitindia.com',
+        email: adminEmail,
         password: hashedPassword,
         role: 'admin',
-        isPasswordChanged: true
+        isPasswordChanged: true,
+        name: 'System Admin'
       });
-      console.log('Admin user seeded: admin@onitindia.com / admin123');
+      console.log(`Admin user created: ${adminEmail} / ${adminPassword}`);
     } else {
-      console.log('Admin user already exists');
+      existingAdmin.password = hashedPassword;
+      existingAdmin.role = 'admin'; // Ensure role is correct
+      existingAdmin.isPasswordChanged = true;
+      await existingAdmin.save();
+      console.log(`Admin user password reset: ${adminEmail} / ${adminPassword}`);
     }
     process.exit(0);
   } catch (err) {
-    console.error(err);
+    console.error('Error seeding admin:', err);
     process.exit(1);
   }
 };

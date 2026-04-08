@@ -1,23 +1,29 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import Employee from './models/Employee.js';
 
-const uri = "mongodb+srv://vijay:vijay6309@cluster0.e5lrxff.mongodb.net/";
+dotenv.config();
 
 const inspect = async () => {
   try {
-    const conn = await mongoose.connect(uri);
-    const admin = conn.connection.db.admin();
-    const dbs = await admin.listDatabases();
-    console.log("Databases on this cluster:");
-    dbs.databases.forEach(db => console.log(` - ${db.name}`));
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("Connected to MongoDB for inspection.\n");
     
-    // Check 'attendance' DB
-    const attendDb = conn.connection.useDb('attendance');
-    const countAttrib = await attendDb.collection('employees').countDocuments({ email: 'admin@onitindia.com' });
-    console.log(`\nIn 'attendance' -> 'employees' has admin: ${countAttrib > 0}`);
+    const adminEmail = 'admin@onitindia.com';
+    const admin = await Employee.findOne({ email: adminEmail });
+    
+    if (admin) {
+      console.log(`User found: ${adminEmail}`);
+      console.log(`Role: ${admin.role}`);
+      console.log(`Password Hash (trimmed): ${admin.password.substring(0, 10)}...`);
+      console.log(`Is Password Changed: ${admin.isPasswordChanged}`);
+    } else {
+      console.log(`User NOT FOUND: ${adminEmail}`);
+    }
 
     process.exit(0);
   } catch (err) {
-    console.error("Error connecting/listing:", err);
+    console.error("Error during inspection:", err);
     process.exit(1);
   }
 };
